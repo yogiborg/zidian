@@ -4,22 +4,29 @@ import { useState, useRef, useCallback, createContext, useContext } from "react"
 // Set VITE_API_URL in your .env file to your Cloudflare Worker URL
 const API_URL = import.meta.env.VITE_API_URL || "https://api.anthropic.com";
 
-const TC = { 1:"#E05C5C", 2:"#4DB882", 3:"#5B8DD9", 4:"#B05CD9", 0:"#999" };
+/* ── Tone colours (theme-aware: call TC(isDark)) ──────────────────── */
+const TC_DARK  = { 1:"#ec134d", 2:"#2adfe8", 3:"#3dd68c", 4:"#6b8af5", 0:"#5c6b5a" };
+const TC_LIGHT = { 1:"#ec134d", 2:"#1ab8c4", 3:"#1a8c56", 4:"#3a58d4", 0:"#5c6b5a" };
+const TC = (dark) => dark ? TC_DARK : TC_LIGHT;
 
 /* ── Theme ────────────────────────────────────────────────────────── */
 const DARK = {
-  bg:"#0F0E0C", surface:"#161412", surface2:"#1A1714", border:"#2A2420",
-  border2:"#3A3028", text:"#E8E0D0", text2:"#C0B090", text3:"#9A8E80",
-  muted:"#7A6E60", faint:"#5A5048", fainter:"#4A4038", ghost:"#2A2420",
-  accent:"#C0392B", accentBg:"#C0392B22", accentBorder:"#C0392B55",
-  inputBg:"#161412", btnText:"#fff", scrollThumb:"#2A2420",
+  dark:true,
+  bg:"#0a0b09", surface:"#121310", surface2:"#1a1b18", border:"#252621",
+  border2:"#1e1f1b", text:"#f2f5f0", text2:"#a8b5a6", text3:"#5c6b5a",
+  muted:"#5c6b5a", faint:"#383a34", fainter:"#21221e", ghost:"#121310",
+  accent:"#ec134d", accentBg:"#ec134d18", accentBorder:"#ec134d40",
+  gold:"#e8b84b", goldTint:"#f5d98a", goldBg:"#e8b84b18",
+  inputBg:"#121310", btnText:"#f2f5f0", scrollThumb:"#21221e",
 };
 const LIGHT = {
-  bg:"#F5F0EB", surface:"#FFFFFF", surface2:"#F0EBE4", border:"#D8D0C4",
-  border2:"#C8BEB0", text:"#1A1410", text2:"#3A2E20", text3:"#6A5848",
-  muted:"#7A6858", faint:"#9A8878", fainter:"#B0A090", ghost:"#E8E0D4",
-  accent:"#C0392B", accentBg:"#C0392B18", accentBorder:"#C0392B44",
-  inputBg:"#FFFFFF", btnText:"#fff", scrollThumb:"#C8BEB0",
+  dark:false,
+  bg:"#f2f5f0", surface:"#edeee8", surface2:"#e3e5dc", border:"#a0a899",
+  border2:"#c8ccbf", text:"#060c04", text2:"#2a3d28", text3:"#5c6b5a",
+  muted:"#5c6b5a", faint:"#c8ccbf", fainter:"#a0a899", ghost:"#edeee8",
+  accent:"#ec134d", accentBg:"#ec134d15", accentBorder:"#ec134d38",
+  gold:"#c4922a", goldTint:"#fbf0d0", goldBg:"#c4922a22",
+  inputBg:"#edeee8", btnText:"#f2f5f0", scrollThumb:"#c8ccbf",
 };
 const Th = createContext(DARK);
 const useT = () => useContext(Th);
@@ -202,7 +209,7 @@ function Dots() {
 function Sec({label, children}) {
   const t = useT();
   return <div style={{marginTop:12,paddingTop:12,borderTop:`1px solid ${t.border}`}}>
-    <div style={{fontSize:9,letterSpacing:"0.2em",color:t.faint,textTransform:"uppercase",marginBottom:6,fontFamily:"monospace"}}>{label}</div>
+    <div style={{fontSize:9,letterSpacing:"0.2em",color:t.gold,textTransform:"uppercase",marginBottom:6,fontFamily:"monospace"}}>{label}</div>
     {children}
   </div>;
 }
@@ -217,7 +224,7 @@ function SegSpan({ seg, charMap, showPinyin, showGloss, isActive, onClick }) {
   // Build per-character colored spans for the Chinese text
   const firstCh = zhChars.find(isChinese);
   const firstCached = charMap[firstCh];
-  const firstToneColor = firstCached ? (TC[firstCached.tone]||TC[0]) : t.muted;
+  const firstToneColor = firstCached ? (TC(t.dark)[firstCached.tone]||TC(t.dark)[0]) : t.muted;
   const activeBg = firstToneColor + "22";
   return (
     <span onClick={onClick} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
@@ -231,7 +238,7 @@ function SegSpan({ seg, charMap, showPinyin, showGloss, isActive, onClick }) {
       <span style={{fontSize:20, lineHeight:1.2, transition:"color 0.1s"}}>
         {zhChars.map((ch, ci) => {
           const cached = charMap[ch];
-          const chColor = isChinese(ch) ? (cached ? TC[cached.tone]||TC[0] : t.text2) : t.fainter;
+          const chColor = isChinese(ch) ? (cached ? TC(t.dark)[cached.tone]||TC(t.dark)[0] : t.text2) : t.fainter;
           const col = hov && !isActive ? t.text : chColor;
           return <span key={ci} style={{color:col}}>{ch}</span>;
         })}
@@ -255,7 +262,7 @@ function SegSpan({ seg, charMap, showPinyin, showGloss, isActive, onClick }) {
 function InfoPanel({ ps, charMap }) {
   const t = useT();
   const basic = charMap[ps?.char];
-  const toneColor = basic ? (TC[basic.tone]||TC[0]) : t.accent;
+  const toneColor = basic ? (TC(t.dark)[basic.tone]||TC(t.dark)[0]) : t.accent;
 
   if (!ps || ps.status==="idle") return (
     <div style={{textAlign:"center",padding:"32px 12px",color:t.fainter,fontSize:13,lineHeight:1.8}}>
@@ -269,11 +276,11 @@ function InfoPanel({ ps, charMap }) {
       <div style={{fontSize:ps.word?.length>1?42:56, fontWeight:"bold", lineHeight:1, marginBottom:4, textShadow:`0 0 22px ${toneColor}44`}}>
         {[...(ps.word||ps.char||"")].map((ch,i) => {
           const cc = charMap[ch];
-          const col = isChinese(ch) ? (cc ? TC[cc.tone]||TC[0] : toneColor) : toneColor;
+          const col = isChinese(ch) ? (cc ? TC(t.dark)[cc.tone]||TC(t.dark)[0] : toneColor) : toneColor;
           return <span key={i} style={{color:col}}>{ch}</span>;
         })}
       </div>
-      <div style={{fontSize:14, color:t.muted, marginBottom:8, fontFamily:"monospace"}}>
+      <div style={{fontSize:14, color:t.gold, marginBottom:8, fontFamily:"monospace"}}>
         {ps.segSounds || ps.segPinyin || basic?.pinyin || ""}
       </div>
 
@@ -293,7 +300,7 @@ function InfoPanel({ ps, charMap }) {
           </div>
         )}
         {ps.detail.era && (
-          <div style={{fontSize:11, color:t.faint, marginBottom:10, fontStyle:"italic"}}>
+          <div style={{fontSize:11, color:t.muted, marginBottom:10, fontStyle:"italic"}}>
             {ps.detail.era}
           </div>
         )}
@@ -301,7 +308,7 @@ function InfoPanel({ ps, charMap }) {
           <Sec label="Definitions">
             {ps.detail.definitions.map((m,i)=>(
               <div key={i} style={{marginBottom:9,paddingBottom:9,borderBottom:`1px solid ${t.surface2}`}}>
-                <span style={{display:"inline-block",background:t.surface2,borderRadius:3,color:t.faint,fontSize:10,padding:"2px 6px",marginRight:7,fontFamily:"monospace"}}>{m.part_of_speech}</span>
+                <span style={{display:"inline-block",background:t.goldBg,borderRadius:3,color:t.gold,fontSize:10,padding:"2px 6px",marginRight:7,fontFamily:"monospace"}}>{m.part_of_speech}</span>
                 <span style={{fontSize:13,color:t.text2,lineHeight:1.6}}>{m.definition}</span>
               </div>
             ))}
@@ -353,7 +360,7 @@ function InfoPanel({ ps, charMap }) {
 function DictSec({label,children}) {
   const t = useT();
   return <div style={{marginTop:14,paddingTop:14,borderTop:`1px solid ${t.border}`}}>
-    <div style={{fontSize:9,letterSpacing:"0.2em",color:t.faint,textTransform:"uppercase",marginBottom:7,fontFamily:"monospace"}}>{label}</div>
+    <div style={{fontSize:9,letterSpacing:"0.2em",color:t.gold,textTransform:"uppercase",marginBottom:7,fontFamily:"monospace"}}>{label}</div>
     {children}
   </div>;
 }
@@ -383,7 +390,7 @@ function DictZh({ d, onLookup }) {
       {d.meanings?.length>0&&<DictSec label="Definitions">
         {d.meanings.map((m,i)=>(
           <div key={i} style={{marginBottom:14,paddingBottom:14,borderBottom:`1px solid ${t.surface2}`}}>
-            <span style={{display:"inline-block",background:t.surface2,borderRadius:3,color:t.faint,fontSize:10,padding:"2px 6px",marginRight:8,fontFamily:"monospace"}}>{m.part_of_speech}</span>
+            <span style={{display:"inline-block",background:t.goldBg,borderRadius:3,color:t.gold,fontSize:10,padding:"2px 6px",marginRight:8,fontFamily:"monospace"}}>{m.part_of_speech}</span>
             <span style={{fontSize:14,color:t.text2,lineHeight:1.6}}>{m.definition}</span>
             {m.example_zh&&<div style={{marginTop:7,paddingLeft:12,borderLeft:`2px solid ${t.border}`}}>
               <div style={{fontSize:14,letterSpacing:"0.04em",marginBottom:2,color:t.text}}>{m.example_zh}</div>
@@ -429,15 +436,15 @@ function DictEn({ d, onLookup }) {
       {d.entries?.map((entry,ei)=>(
         <div key={ei} style={{marginBottom:22,paddingBottom:22,borderBottom:`1px solid ${t.border}`}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-            <span style={{display:"inline-block",background:t.surface2,borderRadius:3,color:t.faint,fontSize:10,padding:"2px 6px",fontFamily:"monospace"}}>{entry.part_of_speech}</span>
+            <span style={{display:"inline-block",background:t.goldBg,borderRadius:3,color:t.gold,fontSize:10,padding:"2px 6px",fontFamily:"monospace"}}>{entry.part_of_speech}</span>
             <span style={{fontSize:14,color:t.text2}}>{entry.meaning_en}</span>
           </div>
           {entry.chinese_translations?.map((tr,ti)=>(
             <div key={ti}
               onClick={()=>onLookup&&onLookup(tr.word)}
               onMouseEnter={e=>e.currentTarget.style.borderLeftColor=t.accent}
-              onMouseLeave={e=>e.currentTarget.style.borderLeftColor=Object.values(TC)[ti%4]||t.accent}
-              style={{background:t.bg,borderRadius:6,padding:"12px 14px",marginBottom:8,cursor:"pointer",borderLeft:`3px solid ${Object.values(TC)[ti%4]||t.accent}`,transition:"border-left-color 0.15s"}}>
+              onMouseLeave={e=>e.currentTarget.style.borderLeftColor=Object.values(TC(t.dark))[ti%4]||t.accent}
+              style={{background:t.bg,borderRadius:6,padding:"12px 14px",marginBottom:8,cursor:"pointer",borderLeft:`3px solid ${Object.values(TC(t.dark))[ti%4]||t.accent}`,transition:"border-left-color 0.15s"}}>
               <div style={{display:"flex",alignItems:"baseline",gap:12,marginBottom:4,flexWrap:"wrap"}}>
                 <span style={{fontSize:26,fontWeight:"bold",color:t.text}}>{tr.word}</span>
                 <span style={{fontSize:14,color:t.muted}}>{tr.pinyin}</span>
@@ -456,7 +463,7 @@ function DictEn({ d, onLookup }) {
       ))}
       {d.usage_note&&(
         <div style={{background:t.bg,borderRadius:6,padding:"12px 14px",border:`1px solid ${t.border}`}}>
-          <div style={{fontSize:9,letterSpacing:"0.2em",color:t.faint,textTransform:"uppercase",marginBottom:6,fontFamily:"monospace"}}>Usage Note</div>
+          <div style={{fontSize:9,letterSpacing:"0.2em",color:t.gold,textTransform:"uppercase",marginBottom:6,fontFamily:"monospace"}}>Usage Note</div>
           <div style={{fontSize:13,color:t.text3,lineHeight:1.7,fontStyle:"italic"}}>{d.usage_note}</div>
         </div>
       )}
@@ -789,9 +796,9 @@ No extra lines. No markdown. Just those 5 lines.`,
                   <button onClick={()=>setShowPinyin(v=>!v)} style={S.toggle(showPinyin)}>{showPinyin?"✓ ":""}拼 Pinyin</button>
                   <button onClick={()=>setShowGloss(v=>!v)} style={S.toggle(showGloss)}>{showGloss?"✓ ":""}英 English</button>
                   <div style={{display:"flex",gap:10,marginLeft:4,alignItems:"center"}}>
-                    {[["1st","#E05C5C"],["2nd","#4DB882"],["3rd","#5B8DD9"],["4th","#B05CD9"]].map(([lbl,col])=>(
-                      <span key={lbl} style={{display:"flex",alignItems:"center",gap:4,fontSize:11,color:t.faint}}>
-                        <span style={{width:8,height:8,borderRadius:"50%",background:col,display:"inline-block",flexShrink:0}}/>
+                    {[[1,"1st"],[2,"2nd"],[3,"3rd"],[4,"4th"]].map(([tone,lbl])=>(
+                      <span key={lbl} style={{display:"flex",alignItems:"center",gap:4,fontSize:11,color:t.text3}}>
+                        <span style={{width:8,height:8,borderRadius:"50%",background:TC(t.dark)[tone],display:"inline-block",flexShrink:0}}/>
                         {lbl}
                       </span>
                     ))}
@@ -822,7 +829,7 @@ No extra lines. No markdown. Just those 5 lines.`,
                         <div onClick={()=>toggleCollapse(si)}
                           style={{display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",marginBottom:isCollapsed?0:12}}>
                           <div>
-                            {si>0 && <div style={{fontSize:10,color:t.fainter,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:3}}>▸ {sec.angle}</div>}
+                            {si>0 && <div style={{fontSize:10,color:t.gold,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:3,opacity:0.7}}>▸ {sec.angle}</div>}
                             <span style={{fontSize:19,fontWeight:"bold",color:t.text}}>{sec.title_zh}</span>
                             <span style={{fontSize:11,color:t.muted,letterSpacing:"0.08em",textTransform:"uppercase",marginLeft:10}}>{sec.title_en}</span>
                           </div>
